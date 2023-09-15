@@ -1,42 +1,57 @@
 import { axiosRequest } from "../../utils/axios-request";
-const { convert } = require('html-to-text');
+import * as cheerio from 'cheerio';
 
-const htmlParserOptions = {
-    selectors: [
-        { selector: 'a', options: { baseUrl: 'https://liquipedia.net/' } },
-        { selector: 'img', options: { baseUrl: 'https://liquipedia.net/' } },
-        {selector: '.gridCell', options: {includeTextContentOnly: true}, format: 'block'}
-    ],
 
-};
+interface GridCellData {
+    text: string;
+    href: string;
+}
 
-const getListOfRelevantTournamentData = (text: string) => {
+interface GridTableData {
+    table: GridCellData[]
+}
 
-    //TODO: Modify algorithm to make a different array for each tournament rather than chaining them all together
-    const lines = text.split('\n');
-  const listOfRelevantTournamentData = lines.reduce((list: string[], item: string) => {
-    if (item.trim() === 'Tier' && list.length === 0) {
-      return [item, ...list];
-    }
-
-    if (list.length > 0) {
-        return [item, ...list];
-    }
-
-    return list;
-  }, []);
-  return listOfRelevantTournamentData.reverse().filter((item : string) => item.trim() !== '');
+interface GridRow {
+    '': string;
+    
 }
 
 export const getSTierTournamentData = async () => {
     const sTierTournamentUrl = 'https://liquipedia.net/ageofempires/api.php?action=parse&page=Age_of_Empires_II%2FS-Tier_Tournaments&format=json';
     const rawSTierTournament = await axiosRequest(sTierTournamentUrl);
-    const sTierTournamentText = Object.values(rawSTierTournament.data.parse.text)[0];
-    const sTierTournamentParsed = convert(sTierTournamentText, htmlParserOptions)
-    console.log(sTierTournamentParsed)
-    const sTierTournamentList = getListOfRelevantTournamentData(sTierTournamentParsed)
+    const sTierTournamentHTML = Object.values(rawSTierTournament.data.parse.text)[0] as string;
+    const $ = cheerio.load(sTierTournamentHTML);
+    const gridTables = $('.gridTable')
+    const gridTableData : any = [];
+    
+    gridTables.each((index, table) => {
+        const gridCellData : GridCellData[] = [];
+        const gridCells = $(table).find('.gridCell');
+        gridCells.each((index, cell) => {
+            const href = $(cell).find('a').attr('href');
+            const text = $(cell).text().trim();
+            gridCellData.push({ text: text, href: href});
+        })
 
-    console.log(sTierTournamentList)
+        const gridCellHeaders = gridCellData.splice(0, 9);
 
-    return sTierTournamentList;
-}
+        let gridTable : any = []
+        let gridRow = {}
+        for(let i=0; i<gridCellData.length; i+= gridCellHeaders.length) {
+
+            gridCellHeaders.forEach((element, indexHeader) => {
+                gridRow = {
+                    ...gridRow,
+                    [element.text]: gridCellData[indexHeader + i]
+                };
+            });
+            console.log(gridRow)
+            gridTable.push(gridRow);
+        }
+
+        gridTableData.push(gridTable)
+    });
+
+    return gridTableData;
+
+    }
