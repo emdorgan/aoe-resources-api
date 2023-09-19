@@ -1,6 +1,5 @@
-import { axiosRequest } from "../../utils/axios-request";
 import * as cheerio from 'cheerio';
-
+import { axiosRequest } from './axios-request';
 
 type GridCellData = {
     text: string;

@@ -2,7 +2,7 @@ import * as Koa from 'koa';
 import * as HttpStatus from 'http-status-codes';
 
 import { RouterContext } from 'koa-router';
-import { getTournamentData } from './queries/sTournament';
+import { getTournamentData } from '../utils/get-tournament-data';
 
 const sTierTournamentUrl = 'https://liquipedia.net/ageofempires/api.php?action=parse&page=Age_of_Empires_II%2FS-Tier_Tournaments&format=json';
 const aTierTournamentUrl = 'https://liquipedia.net/ageofempires/api.php?action=parse&page=Age_of_Empires_II%2FA-Tier_Tournaments&format=json';
@@ -30,9 +30,6 @@ app.use(async (context: Koa.Context, next: () => Promise<any>) => {
 });
 
 app.use(router.routes());
-
-//@TODO: move routes into queries
-// consider moving the get tournament function to utils
 
 router.get('/s-tier', async (context : RouterContext) => {
     const sTierData = await getTournamentData(sTierTournamentUrl);
