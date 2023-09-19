@@ -2,29 +2,31 @@ import { axiosRequest } from "../../utils/axios-request";
 import * as cheerio from 'cheerio';
 
 
-interface GridCellData {
+type GridCellData = {
     text: string;
     href: string;
 }
 
-interface GridTableData {
-    table: GridCellData[]
-}
+type Tournament = Partial<{
+    "tier": GridCellData;
+    "gs": GridCellData;
+    "tournament": GridCellData;
+    "date": GridCellData;
+    "prizepool": GridCellData;
+    "location": GridCellData;
+    "p": GridCellData;
+    "winner": GridCellData;
+    "runner-up": GridCellData;
+}>;
 
-interface GridRow {
-    '': string;
+export const getTournamentData = async (tournamentUrl : string) => {
+    const rawTournamentData = await axiosRequest(tournamentUrl);
+    const rawTournamentHTML = Object.values(rawTournamentData.data.parse.text)[0] as string;
+    const $ = cheerio.load(rawTournamentHTML);
+    const listOfTournamentsInYear = $('.gridTable')
+    const listOfTournaments : Tournament[][] = [];
     
-}
-
-export const getSTierTournamentData = async () => {
-    const sTierTournamentUrl = 'https://liquipedia.net/ageofempires/api.php?action=parse&page=Age_of_Empires_II%2FS-Tier_Tournaments&format=json';
-    const rawSTierTournament = await axiosRequest(sTierTournamentUrl);
-    const sTierTournamentHTML = Object.values(rawSTierTournament.data.parse.text)[0] as string;
-    const $ = cheerio.load(sTierTournamentHTML);
-    const gridTables = $('.gridTable')
-    const gridTableData : any = [];
-    
-    gridTables.each((index, table) => {
+    listOfTournamentsInYear.each((index, table) => {
         const gridCellData : GridCellData[] = [];
         const gridCells = $(table).find('.gridCell');
         gridCells.each((index, cell) => {
@@ -32,26 +34,24 @@ export const getSTierTournamentData = async () => {
             const text = $(cell).text().trim();
             gridCellData.push({ text: text, href: href});
         })
+        const tournamentHeaders = gridCellData.splice(0, 9).map(element => element.text.toLowerCase().replace(/[\s#&]/g, ""));
+        let tournamentList : Tournament[] = [];
+        let tournament : Tournament = {};
 
-        const gridCellHeaders = gridCellData.splice(0, 9);
-
-        let gridTable : any = []
-        let gridRow = {}
-        for(let i=0; i<gridCellData.length; i+= gridCellHeaders.length) {
-
-            gridCellHeaders.forEach((element, indexHeader) => {
-                gridRow = {
-                    ...gridRow,
-                    [element.text]: gridCellData[indexHeader + i]
+        for(let i=0; i < gridCellData.length; i+= tournamentHeaders.length) {
+            tournamentHeaders.forEach((element, indexHeader) => {
+                tournament = {
+                    ...tournament,
+                    [element]: gridCellData[indexHeader + i]
                 };
             });
-            console.log(gridRow)
-            gridTable.push(gridRow);
-        }
 
-        gridTableData.push(gridTable)
+        tournamentList.push(tournament);
+        };
+
+        listOfTournaments.push(tournamentList);
     });
 
-    return gridTableData;
+    return listOfTournaments;
 
-    }
+}
