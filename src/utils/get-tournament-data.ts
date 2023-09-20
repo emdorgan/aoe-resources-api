@@ -23,7 +23,7 @@ export const getTournamentData = async (tournamentUrl : string) => {
     const rawTournamentHTML = Object.values(rawTournamentData.data.parse.text)[0] as string;
     const $ = cheerio.load(rawTournamentHTML);
     const listOfTournamentsInYear = $('.gridTable')
-    const listOfTournaments : Tournament[][] = [];
+    const listOfTournaments : Tournament[] = [];
     
     listOfTournamentsInYear.each((index, table) => {
         const gridCellData : GridCellData[] = [];
@@ -45,12 +45,9 @@ export const getTournamentData = async (tournamentUrl : string) => {
                 };
             });
 
-        tournamentList.push(tournament);
+        listOfTournaments.push(tournament);
         };
-
-        listOfTournaments.push(tournamentList);
     });
 
     return listOfTournaments;
-
 }
