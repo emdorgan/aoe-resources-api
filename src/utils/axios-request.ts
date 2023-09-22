@@ -1,17 +1,27 @@
 import axios, { AxiosResponse } from 'axios';
 
-const cache: { [url: string]: AxiosResponse } = {};
-
-export const axiosRequest = async (url: string): Promise<AxiosResponse> => {
-    if (cache[url]) {
-        console.log('Cache hit for URL:', url);
-        return cache[url];
-    }
-
-    console.log('Making Axios request for URL:', url);
-    const response = await axios.get(url);
-
-    cache[url] = response;
-
-    return response;
+interface Cache {
+  [url: string]: {
+    [tier: string]: AxiosResponse;
+  };
 }
+
+const cache: Cache = {};
+
+export const axiosRequest = async (url: string, tier: string): Promise<AxiosResponse> => {
+  if (cache[url] && cache[url][tier]) {
+    console.log('Cache hit for URL and tier:', url, tier);
+    return cache[url][tier];
+  }
+
+  console.log('Making Axios request for URL and tier:', url, tier);
+  const response = await axios.get(url);
+
+  if (!cache[url]) {
+    cache[url] = {};
+  }
+
+  cache[url][tier] = response;
+
+  return response;
+};

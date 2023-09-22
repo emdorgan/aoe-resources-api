@@ -1,24 +1,23 @@
-import * as Koa from 'koa';
-import * as HttpStatus from 'http-status-codes';
-
 import { RouterContext } from 'koa-router';
+import cors = require('@koa/cors');
 import { getTournamentData } from '../utils/get-tournament-data';
+import { Context } from 'koa';
+import * as HttpStatus from 'http-status-codes';
+const Router = require('koa-router');
+const Koa = require('koa');
+const compress = require ('koa-compress');
 
 const sTierTournamentUrl = 'https://liquipedia.net/ageofempires/api.php?action=parse&page=Age_of_Empires_II%2FS-Tier_Tournaments&format=json';
 const aTierTournamentUrl = 'https://liquipedia.net/ageofempires/api.php?action=parse&page=Age_of_Empires_II%2FA-Tier_Tournaments&format=json';
 const bTierTournamentUrl = 'https://liquipedia.net/ageofempires/api.php?action=parse&page=Age_of_Empires_II%2FB-Tier_Tournaments&format=json';
 const cTierTournamentUrl = 'https://liquipedia.net/ageofempires/api.php?action=parse&page=Age_of_Empires_II%2FC-Tier_Tournaments&format=json';
 
-const compression = require('compression')
-const cors = require('cors')
-const Router = require('koa-router')
-
-const app:Koa = new Koa();
-const router = new Router();
+const app = new Koa();
+export const router = new Router();
 
 
 
-app.use(async (context: Koa.Context, next: () => Promise<any>) => {
+app.use(async (context : Context, next: () => Promise<any>) => {
     try {
         await next();
         } catch (error) {
@@ -29,31 +28,35 @@ app.use(async (context: Koa.Context, next: () => Promise<any>) => {
     }
 });
 
-app.use(router.routes());
+app.use(cors());
+app.use(compress());
 
 router.get('/s-tier', async (context : RouterContext) => {
-    const sTierData = await getTournamentData(sTierTournamentUrl);
-    context.body = sTierData
-})
+    const sTierData = await getTournamentData(sTierTournamentUrl, 's');
+    context.body = sTierData;
+    context.status = 200;
+});
 
 router.get('/a-tier', async (context : RouterContext) => {
-    const sTierData = await getTournamentData(aTierTournamentUrl);
-    context.body = sTierData
-})
+    const aTierData = await getTournamentData(aTierTournamentUrl, 'a');
+    context.body = aTierData;
+    context.status = 200;
+});
 
 router.get('/b-tier', async (context : RouterContext) => {
-    const sTierData = await getTournamentData(bTierTournamentUrl);
-    context.body = sTierData
-})
+    const bTierData = await getTournamentData(bTierTournamentUrl, 'b');
+    context.body = bTierData;
+    context.status = 200;
+});
 
 router.get('/c-tier', async (context : RouterContext) => {
-    const sTierData = await getTournamentData(cTierTournamentUrl);
-    context.body = sTierData
-})
+    const cTierData = await getTournamentData(cTierTournamentUrl, 'c');
+    context.body = cTierData;
+    context.status = 200;
+});
 
-// Middleware
-app.use(cors());
-app.use(compression());
+app.use(router.routes());
+
 
 app.on('error', console.error);
 

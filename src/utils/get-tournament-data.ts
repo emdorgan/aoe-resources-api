@@ -18,8 +18,8 @@ type Tournament = Partial<{
     "runner-up": GridCellData;
 }>;
 
-export const getTournamentData = async (tournamentUrl : string) => {
-    const rawTournamentData = await axiosRequest(tournamentUrl);
+export const getTournamentData = async (tournamentUrl : string, tier : string) => {
+    const rawTournamentData = await axiosRequest(tournamentUrl, tier);
     const rawTournamentHTML = Object.values(rawTournamentData.data.parse.text)[0] as string;
     const $ = cheerio.load(rawTournamentHTML);
     const listOfTournamentsInYear = $('.gridTable')
@@ -34,7 +34,6 @@ export const getTournamentData = async (tournamentUrl : string) => {
             gridCellData.push({ text: text, href: href});
         })
         const tournamentHeaders = gridCellData.splice(0, 9).map(element => element.text.toLowerCase().replace(/[\s#&]/g, ""));
-        let tournamentList : Tournament[] = [];
         let tournament : Tournament = {};
 
         for(let i=0; i < gridCellData.length; i+= tournamentHeaders.length) {
