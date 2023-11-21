@@ -16,7 +16,35 @@ type Tournament = Partial<{
     "p": GridCellData;
     "winner": GridCellData;
     "runner-up": GridCellData;
+    "startDate": string;
+    "endDate": string;
 }>;
+
+const formatDate = (rawDate : string) : {startDate : string, endDate : string} => {
+    const dateRange = rawDate.split(" - ");
+
+    if (!dateRange[1]) {
+        return {
+            startDate: dateRange[0],
+            endDate: dateRange[0]
+        };
+    }
+
+    const dateYear = dateRange[1].split(", ")[1];
+    const dateStartMonth = dateRange[0].substring(0, 3);
+
+    if (isNaN(Number(dateRange[1].charAt(0)))) {
+        return {
+            startDate: `${dateRange[0]}, ${dateYear}`,
+            endDate: dateRange[1],
+        };
+    }
+
+    return {
+        startDate: `${dateRange[0]}, ${dateYear}`,
+        endDate: `${dateStartMonth} ${dateRange[1]}`
+    };
+};
 
 export const getTournamentData = async (tournamentUrl : string, tier : string) => {
     const rawTournamentData = await axiosRequest(tournamentUrl, tier);
@@ -48,5 +76,9 @@ export const getTournamentData = async (tournamentUrl : string, tier : string) =
         };
     });
 
-    return listOfTournaments;
+    const listOfTournamentsWithDates = listOfTournaments.map((element) => {
+        return {...element, ...formatDate(element.date.text)}
+    });
+
+    return listOfTournamentsWithDates;
 }
